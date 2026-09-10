@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>悬浮球</title>
+  <style>
+    html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
+    body { width: 64px; height: 64px; }
+    .ball {
+      width: 64px; height: 64px;
+      background: linear-gradient(160deg, #ffffff 0%, #eef4fb 100%);
+      border: 0.8px solid #e4e9ef;
+      border-radius: 50%;
+      box-shadow: 0 6px 18px rgba(75, 100, 130, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .ball:hover { transform: scale(1.08); }
+    .face {
+      width: 36px; height: 36px;
+      background: #fcfaf6;
+      border-radius: 50%;
+      position: relative;
+    }
+    .eye { position: absolute; top: 12px; width: 5px; height: 5px; background: #2c3e50; border-radius: 50%; }
+    .eye-l { left: 9px; }
+    .eye-r { right: 9px; }
+    .cheek { position: absolute; top: 19px; width: 5px; height: 3px; background: #f8c4b4; border-radius: 50%; }
+    .cheek-l { left: 4px; }
+    .cheek-r { right: 4px; }
+  </style>
+</head>
+<body>
+  <div class="ball" id="ball" title="点我打开待办">
+    <div class="face">
+      <div class="eye eye-l"></div>
+      <div class="eye eye-r"></div>
+      <div class="cheek cheek-l"></div>
+      <div class="cheek cheek-r"></div>
+    </div>
+  </div>
+  <script>
+    document.getElementById('ball').addEventListener('click', () => {
+      window.api.showWindow();   // 恢复主窗口
+    });
+  </script>
+</body>
+</html>

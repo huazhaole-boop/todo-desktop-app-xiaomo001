@@ -1,0 +1,31 @@
+{
+  "name": "zhupeng-todo",
+  "version": "0.1.0",
+  "description": "桌面悬浮待办清单 - 浅蓝清新卡片 + Q 版陪伴角色",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron . --no-sandbox --disable-gpu --disable-software-rasterizer",
+    "build": "electron-builder --win"
+  },
+  "author": "yu",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^32.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.zhupeng.todo",
+    "productName": "桌宠待办",
+    "electronDist": "node_modules/electron/dist",
+    "win": {
+      "target": "dir",
+      "signAndEditExecutable": false
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "assets/**/*"
+    ]
+  }
+}

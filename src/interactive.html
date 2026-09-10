@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>桌宠待办 · 交互版</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      background: #eef2f7;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .tip {
+      position: fixed;
+      top: 14px; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(11, 58, 102, 0.88);
+      color: #fff;
+      padding: 7px 18px;
+      border-radius: 999px;
+      font-size: 12px;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .tip b { color: #ffd968; }
+  </style>
+</head>
+<body>
+  <div class="tip">浏览器交互版 · 数据存 localStorage · <b>可增删勾选</b></div>
+
+  <div class="app">
+    <!-- 头部面板：统一圆角 -->
+    <header class="top">
+      <!-- 精致小狐 SVG -->
+      <div class="mascot-wrap">
+        <svg class="mascot" viewBox="0 0 130 100" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="halo" cx="50%" cy="50%" r="60%">
+              <stop offset="0%" stop-color="#ffe7d6" stop-opacity="0.45"/>
+              <stop offset="60%" stop-color="#ffe7d6" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <!-- 暖光 -->
+          <circle cx="65" cy="50" r="48" fill="url(#halo)"/>
+          <!-- 装饰光点 -->
+          <circle cx="92" cy="6" r="3" fill="#fff7e6" opacity="0.9"/>
+          <circle cx="6" cy="78" r="2.5" fill="#e6f0fb" opacity="0.9"/>
+          <circle cx="120" cy="84" r="2" fill="#fdebd6" opacity="0.9"/>
+          <circle cx="14" cy="20" r="2" fill="#fce4d6" opacity="0.85"/>
+
+          <g class="fox-body">
+            <!-- 耳朵（外+内）-->
+            <path d="M40 22 L34 -2 L58 14 Z" fill="#fcfaf6"/>
+            <path d="M90 22 L96 -2 L72 14 Z" fill="#fcfaf6"/>
+            <path d="M42 20 L38 4 L52 14 Z" fill="#f5c6a0"/>
+            <path d="M88 20 L92 4 L78 14 Z" fill="#f5c6a0"/>
+
+            <!-- 脸 -->
+            <path d="M40 50 C36 22 50 8 65 8 C80 8 94 22 90 50 L88 78 L42 78 Z" fill="#fcfaf6"/>
+
+            <!-- 腮红 -->
+            <ellipse cx="48" cy="56" rx="5" ry="2.6" fill="#f8c4b4" opacity="0.7"/>
+            <ellipse cx="82" cy="56" rx="5" ry="2.6" fill="#f8c4b4" opacity="0.7"/>
+
+            <!-- 眼睛 -->
+            <g class="eye eye-l">
+              <ellipse cx="54" cy="44" rx="6" ry="8" fill="#2c3e50"/>
+              <circle cx="56" cy="42" r="1.8" fill="#ffffff"/>
+              <ellipse class="lid" cx="54" cy="44" rx="6" ry="8" fill="#fcfaf6"/>
+            </g>
+            <g class="eye eye-r">
+              <ellipse cx="76" cy="44" rx="6" ry="8" fill="#2c3e50"/>
+              <circle cx="78" cy="42" r="1.8" fill="#ffffff"/>
+              <ellipse class="lid" cx="76" cy="44" rx="6" ry="8" fill="#fcfaf6"/>
+            </g>
+
+            <!-- 鼻子嘴巴 -->
+            <ellipse cx="65" cy="56" rx="2.6" ry="1.8" fill="#d48474"/>
+            <path d="M59 62 Q65 66 71 62" fill="none" stroke="#7a604a" stroke-width="1.5" stroke-linecap="round"/>
+
+            <!-- 尾巴（蓬松）-->
+            <path d="M88 42 Q104 58 96 84 Q112 78 114 56 Z" fill="#fcfaf6"/>
+            <path d="M88 50 Q102 64 96 80" fill="none" stroke="#e6dfd0" stroke-width="0.8"/>
+
+            <!-- 项圈铃铛 -->
+            <rect x="45" y="76" width="40" height="8" rx="4" fill="#e07a6c"/>
+            <circle cx="65" cy="82" r="3.2" fill="#ffd968"/>
+            <circle cx="65" cy="82" r="0.8" fill="#b58b2a"/>
+          </g>
+        </svg>
+      </div>
+
+      <div class="clock">
+        <div class="time" id="time">--:--</div>
+        <div class="date" id="date">--月--日 · 周-</div>
+      </div>
+
+      <button class="btn-close" id="btn-hide" title="折叠">×</button>
+    </header>
+
+    <section class="progress">
+      <div class="progress-head">
+        <span class="progress-label">今日完成度</span>
+        <span class="progress-count" id="progress-count">0 / 0</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+      </div>
+    </section>
+
+    <section class="todo-list" id="todo-list"></section>
+
+    <footer class="bottom">
+      <div class="quick-input-wrap">
+        <input type="text" id="quick-input" class="quick-input" placeholder="写下今天要做的事，回车就存" maxlength="60">
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    // ====== 时钟（只显示时:分）======
+    function updateClock() {
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      $('time').textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      const m = now.getMonth() + 1, d = now.getDate();
+      const wk = ['日','一','二','三','四','五','六'];
+      $('date').textContent = `${m}月${d}日 · 周${wk[now.getDay()]}`;
+    }
+    setInterval(updateClock, 1000); updateClock();
+
+    // ====== 眨眼（用 SVG 缩放眼睑）======
+    function blink() {
+      document.querySelectorAll('.eye').forEach(e => e.classList.add('blink'));
+      setTimeout(() => document.querySelectorAll('.eye').forEach(e => e.classList.remove('blink')), 130);
+      setTimeout(blink, 2500 + Math.random() * 2500);
+    }
+    setTimeout(blink, 1500);
+
+    // ====== 数据 ======
+    const KEY = 'zhupeng-todo-v1';
+    function load() {
+      try { return JSON.parse(localStorage.getItem(KEY)) || { todos: [] }; }
+      catch { return { todos: [] }; }
+    }
+    function save(data) { localStorage.setItem(KEY, JSON.stringify(data)); }
+    let todos = load().todos || [];
+
+    function render() {
+      const list = $('todo-list');
+      list.innerHTML = '';
+      if (todos.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = '— 还没有待办，写下今天要做的事 —';
+        list.appendChild(empty);
+      } else {
+        todos.forEach((t) => {
+          const item = document.createElement('div');
+          item.className = 'todo-item' + (t.done ? ' done' : '');
+
+          const check = document.createElement('div');
+          check.className = 'todo-check';
+          check.addEventListener('click', () => toggle(t.id));
+
+          const text = document.createElement('div');
+          text.className = 'todo-text';
+          text.textContent = t.text;
+          text.addEventListener('dblclick', () => editTodo(t.id, text));
+
+          const del = document.createElement('button');
+          del.className = 'todo-del';
+          del.textContent = '×';
+          del.addEventListener('click', () => remove(t.id));
+
+          item.appendChild(check);
+          item.appendChild(text);
+          item.appendChild(del);
+          list.appendChild(item);
+        });
+      }
+      const done = todos.filter(t => t.done).length;
+      $('progress-count').textContent = `${done} / ${todos.length}`;
+      const pct = todos.length === 0 ? 0 : (done / todos.length) * 100;
+      $('progress-fill').style.width = pct + '%';
+      save({ todos });
+    }
+
+    function add(text) {
+      text = (text || '').trim();
+      if (!text) return;
+      todos.unshift({ id: Date.now() + Math.random(), text, done: false });
+      render();
+    }
+    function toggle(id) {
+      const t = todos.find(x => x.id === id);
+      if (t) { t.done = !t.done; render(); }
+    }
+    function remove(id) {
+      todos = todos.filter(x => x.id !== id);
+      render();
+    }
+    function editTodo(id, el) {
+      const t = todos.find(x => x.id === id);
+      if (!t) return;
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = t.text;
+      input.style.cssText = 'flex:1;border:none;outline:none;background:transparent;font-size:15px;color:#1e293b;font-family:inherit;';
+      el.replaceWith(input);
+      input.focus();
+      input.select();
+      const finish = () => {
+        const v = input.value.trim();
+        if (v) { t.text = v; }
+        render();
+      };
+      input.addEventListener('blur', finish);
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+        if (e.key === 'Escape') { render(); }
+      });
+    }
+
+    // ====== 常驻底部输入 ======
+    const quickInput = $('quick-input');
+    quickInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const v = quickInput.value.trim();
+        if (v) {
+          add(v);
+          quickInput.value = '';
+        }
+      } else if (e.key === 'Escape') {
+        quickInput.value = '';
+        quickInput.blur();
+      }
+    });
+
+    // N 键聚焦
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'n' && !e.ctrlKey && !e.metaKey && document.activeElement !== quickInput) {
+        const tag = (document.activeElement && document.activeElement.tagName) || '';
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+        e.preventDefault();
+        quickInput.focus();
+        quickInput.select();
+      }
+    });
+
+    // 双击列表/底部 → 聚焦
+    $('todo-list').addEventListener('dblclick', (e) => {
+      if (e.target === $('todo-list') || e.target.classList.contains('empty')) {
+        quickInput.focus();
+      }
+    });
+    document.querySelector('.bottom').addEventListener('dblclick', () => quickInput.focus());
+
+    $('btn-hide').addEventListener('click', () => {
+      alert('浏览器版不支持隐藏～ 桌面 exe 版本会支持缩成悬浮球。\n\n数据已经存好，重启浏览器还在。');
+    });
+
+    render();
+  </script>
+
+  <style>
+    /* 小狐的 CSS 动画 + 眨眼 */
+    .mascot-wrap {
+      width: 110px; height: 80px;
+      display: flex; align-items: center; justify-content: center;
+      -webkit-app-region: no-drag;
+      animation: float 3s ease-in-out infinite;
+    }
+    .mascot { width: 110px; height: 80px; }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-3px); }
+    }
+    .fox-body { transform-origin: 65px 70px; animation: tailWag 2.8s ease-in-out infinite; }
+    @keyframes tailWag {
+      0%, 100% { transform: rotate(-1.5deg); }
+      50%      { transform: rotate(1.5deg); }
+    }
+    .eye .lid {
+      transform-origin: center;
+      transform: scaleY(0);
+      transition: transform 0.08s ease;
+    }
+    .eye.blink .lid { transform: scaleY(1); }
+  </style>
+</body>
+</html>
